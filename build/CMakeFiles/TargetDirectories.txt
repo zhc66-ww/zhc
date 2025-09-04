@@ -1,0 +1,3 @@
+/home/zhc/zhc66/build/CMakeFiles/rebuild_cache.dir
+/home/zhc/zhc66/build/CMakeFiles/edit_cache.dir
+/home/zhc/zhc66/build/CMakeFiles/AzureKinectDemo.dir

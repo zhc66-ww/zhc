@@ -1,0 +1,190 @@
+<?xml version='1.0'?>
+<robot name="dd_robot">
+    <!-- 小车主体 -->
+    <link name="base_link">
+        <visual>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="0.5 0.5 0.25" />
+            </geometry>
+            <material name="blue">
+                <color rgba="0.0 0.5 1.0 1.0"/>
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <geometry>
+                <box size="0.5 0.5 0.25"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="5"/>
+            <inertia ixx="0.13" ixy="0.0" ixz="0.0" iyy="0.21" iyz="0.0" izz="0.13"/>
+        </inertial>
+    </link>
+
+    <!-- 2D 雷达 -->
+    <link name="laser_link">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry><cylinder radius="0.05" length="0.1"/></geometry>
+            <material><color rgba="0 1 0 1"/></material>
+        </visual>
+        <collision>
+            <geometry><cylinder radius="0.05" length="0.1"/></geometry>
+        </collision>
+        <inertial>
+            <mass value="0.1"/>
+            <inertia ixx="0.001" iyy="0.001" izz="0.001" ixy="0" ixz="0" iyz="0"/>
+        </inertial>
+    </link>
+    <joint name="laser_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="laser_link"/>
+        <origin xyz="0 0 0.3" rpy="0 0 0"/>
+    </joint>
+
+    <gazebo reference="laser_link">
+        <sensor type="ray" name="laser_sensor">
+            <pose>0 0 0 0 0 0</pose>
+            <ray>
+                <scan>
+                    <horizontal>
+                        <samples>180</samples>
+                        <resolution>1</resolution>
+                        <min_angle>-1.57</min_angle>
+                        <max_angle>1.57</max_angle>
+                    </horizontal>
+                </scan>
+                <range>
+                    <min>0.1</min>
+                    <max>5.0</max>
+                    <resolution>0.01</resolution>
+                </range>
+            </ray>
+            <plugin name="gazebo_ros_laser_controller" filename="libgazebo_ros_laser.so">
+                <topicName>/scan</topicName>
+                <frameName>laser_link</frameName>
+            </plugin>
+        </sensor>
+    </gazebo>
+
+    <!-- 轮子定义 -->
+    <link name="right_wheel">
+        <inertial>
+            <mass value="1.0"/>
+            <inertia ixx="0.001" iyy="0.001" izz="0.001" ixy="0.0" ixz="0.0" iyz="0.0"/>
+        </inertial>
+        <visual>
+            <origin xyz="0.0 0.0 0.0" rpy="1.570795 0.0 0.0"/>
+            <geometry>
+                <cylinder length="0.1" radius="0.2"/>
+            </geometry>
+            <material name="black">
+                <color rgba="0.05 0.05 0.05 1.0"/>
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="1.570795 0.0 0.0"/>
+            <geometry>
+                <cylinder length="0.1" radius="0.2"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="join_right_wheel" type="continuous">
+        <parent link="base_link"/>
+        <child link="right_wheel"/>
+        <origin xyz="0.0 -0.30 0.0" rpy="0.0 0.0 0.0"/>
+        <axis xyz="0.0 1.0 0.0"/>
+    </joint>
+
+    <link name="left_wheel">
+        <inertial>
+            <mass value="1.0"/>
+            <inertia ixx="0.001" iyy="0.001" izz="0.001" ixy="0.0" ixz="0.0" iyz="0.0"/>
+        </inertial>
+        <visual>
+            <origin xyz="0.0 0.0 0.0" rpy="1.570795 0.0 0.0"/>
+            <geometry>
+                <cylinder length="0.1" radius="0.2"/>
+            </geometry>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <origin xyz="0.0 0.0 0.0" rpy="1.570795 0.0 0.0"/>
+            <geometry>
+                <cylinder length="0.1" radius="0.2"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="join_left_wheel" type="continuous">
+        <parent link="base_link"/>
+        <child link="left_wheel"/>
+        <origin xyz="0.0 0.3 0.0" rpy="0.0 0.0 0.0"/>
+        <axis xyz="0.0 1.0 0.0"/>
+    </joint>
+
+    <gazebo reference="base_link">
+        <material>Gazebo/Blue</material>
+    </gazebo>
+    <gazebo reference="right_wheel">
+        <material>Gazebo/Black</material>
+    </gazebo>
+    <gazebo reference="left_wheel">
+        <material>Gazebo/Black</material>
+    </gazebo>
+
+    <!-- 3D 雷达：Livox AVIA 雷达 -->
+    <link name="livox_base">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://livox_laser_simulation/meshes/livox_mid40.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://livox_laser_simulation/meshes/livox_mid40.dae"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.001" iyy="0.001" izz="0.001" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="livox_to_base_link" type="fixed">
+    <parent link="base_link"/>
+    <child link="livox_base"/>
+    <origin xyz="0 0 0.35" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="livox_base">
+    <sensor type="depth" name="livox_sensor">
+      <update_rate>10</update_rate>
+      <camera>
+        <horizontal_fov>1.23</horizontal_fov> <!-- 70.4° -->
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.1</near>
+          <far>200.0</far>
+        </clip>
+      </camera>
+      <plugin name="gazebo_ros_depth_camera_controller" filename="libgazebo_ros_depth_camera.so">
+        <frameName>livox_base</frameName>
+        <pointCloudTopicName>/livox_points</pointCloudTopicName>
+        <depthImageTopicName>/livox/depth/image_raw</depthImageTopicName>
+        <colorImageTopicName>/livox/color/image_raw</colorImageTopicName>
+        <pointCloudCutoff>0.1</pointCloudCutoff>
+      </plugin>
+    </sensor>
+  </gazebo>
+  
+</robot>

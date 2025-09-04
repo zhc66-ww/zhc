@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- 设置 Gazebo 插件路径 -->
+    <env name="GAZEBO_PLUGIN_PATH" value="/opt/ros/noetic/lib"/>
+    <!--在通过命令行启动launch文件时要提供那些参数，也可以设置这些参数的默认值-->
+    <arg name="model" default="dd_robot.urdf"/>
+    <arg name="gui" default="False" />
+
+    <!--这个launch将在ＲＯＳ中的参数管理平台中发布这些可以查看、使用的参数-->
+    <!--robot_description是最重要的！！他应该是能够告诉 Rviz 应该读取显示哪个URDF文件-->
+    <param name="robot_description" textfile="$(find ros_robotics)/urdf/$(arg model)" />
+    <param name="use_gui" value="$(arg gui)"/><!--use_gui表示是否打开一个可以控制整个模型中所有joint的ｇｕｉ界面-->
+
+    <!--这个launch要启动３个ｎｏｄｅ节点: joint_state_publisher, robot_state_publisher and rviz-->
+    <!--下面启动ｎｏｄｅ的方法其实是系统自动在命令窗口中分别用ｒｏｓｒｕｎ命令启动各个node，以最后的ｎｏｄｅ代码块为例,它对应的启动命令是：
+    rosrun pkg(rviz) node(rviz) args(各个参数) required(意义不太清楚)  代码块中的name有着其他含义-->
+    <!--这段node代码块的含义：
+    从pkg对应的功能包中，启动名称为type对应值的节点，并将启动的阶段在ＲＯＳ平台中的名称设为name的对应值-->
+    <!--joint_state_publisher将urdf中的关节信息发布出去，从而帮助rviz等软件根据关节来显示各个link和机器人模型-->
+    <node name="joint_state_publisher"
+     pkg="joint_state_publisher"
+     type="joint_state_publisher" />
+     
+    <!--robot_state_publisher会将机器人行动后的信息发布出去，帮助tf功能包确定机器人当前的状态，从何在模拟软件中显示-->
+    <node name="robot_state_publisher"
+     pkg="robot_state_publisher"
+     type="robot_state_publisher" />
+
+    <!-- 启动 Gazebo -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find ros_robotics)/worlds/dd_robot.world"/>
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="recording" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <!-- Spawn 机器人 -->
+    <node name="spawn_dd_robot" pkg="gazebo_ros" type="spawn_model" output="screen"
+      args="-urdf -param robot_description -model dd_robot -x 0 -y 0 -z 0.1"/>
+      
+    <!-- 启动 teleop 键盘 -->
+    <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop" output="screen">
+        <param name="speed" value="0.2"/>
+        <param name="turn" value="1.0"/>
+    </node>
+
+    <!-- Gmapping -->
+  <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping"/>
+
+  <!-- lidar filter-->
+  <node pkg="wpr_simulation" type="lidar_filter" name="lidar_filter" />
+
+    <!-- 订阅 /odom 给 RViz 用 -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="odom_to_base" args="0 0 0 0 0 0 odom base_link" />
+    
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" args="diff_drive_controller"/>
+
+    <env name="GAZEBO_MODEL_PATH" value="$(find ros_robotics)/urdf:$(env GAZEBO_MODEL_PATH)"/>
+    
+    <param name="use_sim_time" value="true"/>
+
+    <!--这段ｎｏｄｅ块复杂一点：
+    一开始的代码和之前的意义一样，即启动ｒｖｉｚ。之后设置ｒｖｉｚ启动时的所有参数args，和required(意义不明)
+    urdf.rviz是ｒｖｉｚ软件的可读文件，它保存了上一次rviz退出时的状态，之后启动rviz时，通过读取这个urdf.rviz可以恢复先前的状态，并配置好rviz的参数-->
+    <node name="rviz" pkg="rviz" type="rviz" 
+    args="-d $(find ros_robotics)/urdf.rviz" 
+    required="true" />
+</launch>
